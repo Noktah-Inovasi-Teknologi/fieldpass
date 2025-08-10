@@ -1,0 +1,44 @@
+{
+  "name": "api",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@faker-js/faker": "^9.9.0",
+    "@types/bcrypt": "^6.0.0",
+    "@types/bun": "latest",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^24.2.1",
+    "@types/supertest": "^6.0.3",
+    "@vitest/ui": "^3.2.4",
+    "c8": "^10.1.3",
+    "dotenv": "^17.2.1",
+    "prisma": "^6.13.0",
+    "supertest": "^7.1.4",
+    "tsx": "^4.20.3",
+    "vitest": "^3.2.4"
+  },
+  "peerDependencies": {
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.1.0",
+    "@fastify/helmet": "^13.0.1",
+    "@fastify/rate-limit": "^10.3.0",
+    "@pothos/core": "^4.8.1",
+    "@pothos/plugin-prisma": "^4.10.0",
+    "@prisma/client": "^6.13.0",
+    "@supabase/supabase-js": "^2.54.0",
+    "bcrypt": "^6.0.0",
+    "bull": "^4.16.5",
+    "date-fns": "^4.1.0",
+    "fastify": "^5.4.0",
+    "graphql": "^16.11.0",
+    "graphql-yoga": "^5.15.1",
+    "ioredis": "^5.7.0",
+    "jsonwebtoken": "^9.0.2",
+    "nanoid": "^5.1.5",
+    "zod": "^4.0.16",
+    "zod-validation-error": "^4.0.1"
+  }
+}
