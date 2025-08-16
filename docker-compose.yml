@@ -1,0 +1,60 @@
+version: '3.9'
+
+services:
+  # PostgreSQL for Development
+  postgres-dev:
+    image: supabase/postgres:15.1.0.117
+    container_name: fieldpass-postgres-dev
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: fieldpass-dev-password
+      POSTGRES_DB: fieldpass_dev
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  
+  # PostgreSQL for Testing
+  postgres-test:
+    image: supabase/postgres:15.1.0.117
+    container_name: fieldpass-postgres-test
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_PASSWORD: fieldpass-test-password
+      POSTGRES_DB: fieldpass_test
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: fieldpass-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  inbucket:
+    image: inbucket/inbucket
+    container_name: fieldpass-inbucket
+    ports:
+      - "9000:9000" # Web UI
+      - "2500:2500" # SMTP
+      - "1100:1100" # POP3
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  postgres_test_data:
+    driver: local
+  redis_data:
+    driver: local

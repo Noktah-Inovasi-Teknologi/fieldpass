@@ -1,0 +1,255 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL") // Migrations
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  username      String    @unique
+  passwordHash  String?
+  phoneNumber   String?   @unique
+  provider      AuthProvider?
+  
+  profile       Profile?
+  bookings      Booking[]
+  communities   CommunityMember[]
+  reviews       Review[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([email])
+  @@index([username])
+}
+
+model Profile {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id])
+  
+  firstName     String?
+  lastName      String?
+  avatar        String?
+  bio           String?
+  dateOfBirth   DateTime?
+  
+  sports        String[]  // Array of sport IDs
+  skillLevels   Json?     // { "football": "intermediate", "badminton": "beginner" }
+  
+  stats         Json?     // { "totalBookings": 0, "totalHours": 0 }
+  achievements  Json[]    // Array of achievement objects
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Venue {
+  id            String    @id @default(uuid())
+  name          String
+  slug          String    @unique
+  description   String?
+  
+  address       String
+  city          String
+  latitude      Float
+  longitude     Float
+  
+  sports        String[]  // Sports available
+  facilities    String[]  // Parking, changing room, etc
+  images        String[]
+  
+  pricePerHour  Float
+  currency      String    @default("IDR")
+  
+  openTime      String    // "06:00"
+  closeTime     String    // "23:00"
+  
+  rating        Float     @default(0)
+  totalReviews  Int       @default(0)
+  
+  isActive      Boolean   @default(true)
+  
+  bookings      Booking[]
+  reviews       Review[]
+  timeSlots     TimeSlot[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([slug])
+  @@index([city])
+}
+
+model TimeSlot {
+  id            String    @id @default(uuid())
+  venueId       String
+  venue         Venue     @relation(fields: [venueId], references: [id])
+  
+  dayOfWeek     Int       // 0-6 (Sunday-Saturday)
+  startTime     String    // "09:00"
+  endTime       String    // "10:00"
+  
+  isAvailable   Boolean   @default(true)
+  isPeakHour    Boolean   @default(false)
+  priceMultiplier Float   @default(1.0)
+  
+  @@unique([venueId, dayOfWeek, startTime])
+}
+
+model Booking {
+  id            String    @id @default(uuid())
+  bookingCode   String    @unique
+  
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  
+  venueId       String
+  venue         Venue     @relation(fields: [venueId], references: [id])
+  
+  date          DateTime
+  startTime     String
+  endTime       String
+  duration      Int       // in minutes
+  
+  totalPrice    Float
+  status        BookingStatus @default(PENDING)
+  
+  payment       Payment?
+  
+  notes         String?
+  participants  String[]  // Array of user IDs
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([userId])
+  @@index([venueId])
+  @@index([date])
+  @@index([status])
+}
+
+model Payment {
+  id            String    @id @default(uuid())
+  bookingId     String    @unique
+  booking       Booking   @relation(fields: [bookingId], references: [id])
+  
+  amount        Float
+  currency      String    @default("IDR")
+  
+  provider      PaymentProvider
+  externalId    String    @unique
+  
+  status        PaymentStatus @default(PENDING)
+  
+  paidAt        DateTime?
+  metadata      Json?
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([externalId])
+  @@index([status])
+}
+
+model Review {
+  id            String    @id @default(uuid())
+  
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  
+  venueId       String
+  venue         Venue     @relation(fields: [venueId], references: [id])
+  
+  rating        Int       // 1-5
+  comment       String?
+  images        String[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@unique([userId, venueId])
+}
+
+model Community {
+  id            String    @id @default(uuid())
+  name          String
+  slug          String    @unique
+  description   String?
+  
+  sport         String
+  city          String
+  
+  coverImage    String?
+  
+  isPublic      Boolean   @default(true)
+  
+  members       CommunityMember[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model CommunityMember {
+  id            String    @id @default(uuid())
+  
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  
+  communityId   String
+  community     Community @relation(fields: [communityId], references: [id])
+  
+  role          MemberRole @default(MEMBER)
+  
+  joinedAt      DateTime  @default(now())
+  
+  @@unique([userId, communityId])
+}
+
+// ENUMS
+enum AuthProvider {
+  EMAIL
+  GOOGLE
+  APPLE
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum PaymentProvider {
+  XENDIT
+  MIDTRANS
+  MANUAL
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  MODERATOR
+  MEMBER
+}
